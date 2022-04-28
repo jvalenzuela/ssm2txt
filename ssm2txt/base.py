@@ -212,6 +212,12 @@ class Tab(Base):
     BORDER_CORNER = chr(9492)
     BORDER_BOTTOM = chr(9472)
 
+    # Translations for PL values other than the normal a-e.
+    pl_other = {
+        'plN': '-',
+        'plU': 'n.a.'
+    }
+
     @property
     def parent(self):
         """Acquires the Node object owning this tab."""
@@ -284,3 +290,20 @@ class Tab(Base):
             value = formatter(raw_value)
 
         return value
+
+    def format_pl(self, raw):
+        """Formats a PL attribute value.
+
+        This is not direcly called as a field formatting method because
+        there are no attributes that are just 'pl'; this is used by actual
+        formatting methods that need to normalize PL values.
+        """
+        # First, see if it's one of the non-alpha values.
+        try:
+            pl = self.pl_other[raw]
+
+        # Normal PL values strip the 'pl' prefix and convert to lower-case.
+        except KeyError:
+            pl = raw[-1].lower()
+
+        return pl
