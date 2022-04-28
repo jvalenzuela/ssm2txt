@@ -198,7 +198,17 @@ class Tab(Base):
         # doesn't have a title.
         'title',
 
-        # Associated XML attribute.
+        # This can be one of the following based on how the parameter value
+        # is acquired:
+        #
+        # 1. A string containing the name of an XML attribute in the parent
+        #    node's element.
+        #
+        # 2. A string containing the name of a method for cases where the
+        #    value is not derived from a single attribute.
+        #
+        # These are attempted in the order listed, i.e., if the XML attribute
+        # exists, it will take priority over a method name.
         'attrib',
 
         # Optional string to identify a method to selectively exclude the field.
@@ -274,11 +284,19 @@ class Tab(Base):
     def field_value(self, attrib):
         """Acquires the string to be printed as the field's value.
 
-        The attribute's raw value is output by default. The value can be
-        altered if the instance defines a format_<attrib> method, in which
-        case the return value is used as the output string.
+        The attribute's raw value or method return value is output by
+        default. The value can be altered if the instance defines a
+        format_<attrib> method, in which case the return value is used
+        as the output string.
         """
-        raw_value = self.element.attrib[attrib]
+        # See if the XML attribute exists.
+        try:
+            raw_value = self.element.attrib[attrib]
+
+        # Revert to a method if the XML attribute does not exist.
+        except KeyError:
+            method = getattr(self, attrib)
+            raw_value = method()
 
         try:
             formatter = getattr(self, '_'.join(('format', attrib)))
