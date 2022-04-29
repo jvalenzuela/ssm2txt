@@ -29,6 +29,19 @@ class Base(object):
         """
         return True
 
+    def format_cat(self, raw):
+        """Formatter for category fields."""
+
+        value = raw[-1]
+        if value == 'N':
+            value = 'Unknown'
+        return value
+
+    @property
+    def category(self):
+        """Returns the object's category."""
+        return self.format_cat(self.element.attrib['cat'])
+
 
 class Node(Base):
     """

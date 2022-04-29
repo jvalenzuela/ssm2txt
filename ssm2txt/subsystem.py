@@ -188,15 +188,11 @@ class Category(Tab):
 
     def show_requirements(self):
         """Filter function to enable the requirements checklist."""
-        return self.parent.category != 'Unknown'
+        return self.category != 'Unknown'
 
     def show_reduced_test(self):
         """Filter function to enable the reduced test frequency parameter."""
-        return self.parent.category == '2'
-
-    def format_cat(self, raw):
-        """Formatter for the subsystm category."""
-        return self.parent.category
+        return self.category == '2'
 
     def format_reducedtestingrate(self, raw):
         """Formatter for the reduced test frequency checkbox parameter."""
@@ -207,7 +203,7 @@ class Category(Tab):
         keys = self.csv_to_int(raw)
 
         # Remove options not applicable to the selected category.
-        filtered = [k for k in keys if self.parent.category in self.req_show[k]]
+        filtered = [k for k in keys if self.category in self.req_show[k]]
 
         # Start with an empty line so the first item begins on the line
         # following the field title.
@@ -288,7 +284,7 @@ class DCavg(Tab):
             include = False
 
         # Excluded for categories B and 1.
-        if self.parent.category in 'B1':
+        if self.category in 'B1':
             include = False
 
         # Exclude when PL is determined from subitems and MTTFD is a fault
@@ -333,7 +329,7 @@ class CCF(Tab):
             include = False
 
         # CCF is omitted for categories less than 2.
-        if not self.parent.category in '234':
+        if not self.category in '234':
             include = False
 
         # CCF is omitted if MTTFD is entered directly.
@@ -406,14 +402,6 @@ class Subsystem(Node):
         simplified method.
         """
         return self.element.attrib['pldet'] == 'detSubItemsSimple'
-
-    @property
-    def category(self):
-        """Returns the category selected in the Category tab."""
-        value = self.element.attrib['cat'][-1]
-        if value == 'N':
-            value = 'Unknown'
-        return value
 
     @property
     def mttfd_direct(self):
