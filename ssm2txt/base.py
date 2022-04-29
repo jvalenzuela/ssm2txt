@@ -49,7 +49,7 @@ class Node(Base):
         self.register_with_parent()
 
         # Add this object to the mapping of OIDs to node objects.
-        nodes[element.attrib['oid']] = self
+        nodes[self.oid] = self
 
     @property
     def parent(self):
@@ -65,6 +65,11 @@ class Node(Base):
             parent = self.nodes[parent_oid]
 
         return parent
+
+    @property
+    def oid(self):
+        """The OID string assigned to this element."""
+        return self.element.attrib['oid']
 
     def register_with_parent(self):
         """
