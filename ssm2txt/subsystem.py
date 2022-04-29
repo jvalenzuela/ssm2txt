@@ -82,7 +82,7 @@ class PL(Tab):
         Filter function to enable the list of checked options when not using
         PL/SIL direct entry.
         """
-        return 'SubItems' in self.element.attrib['pldet']
+        return self.parent.pl_from_cat or self.parent.pl_from_cat_simple
 
     def format_pldet(self, value):
         """Formatting method for the selected method to determine PL."""
@@ -107,7 +107,7 @@ class PL(Tab):
         keys = self.csv_to_int(value)
 
         # Options 5-7 are only applicable if the simplified method is selected.
-        limit = 7 if self.element.attrib['pldet'] == 'detSubItemsSimple' else 4
+        limit = 7 if self.parent.pl_from_cat_simple else 4
         filtered_keys = [k for k in keys if k <= limit]
 
         return '\n'.join([self.conditions[k] for k in filtered_keys])
@@ -179,6 +179,13 @@ class Category(Tab):
         10: 'B1234'
     }
 
+    def show(self):
+        """
+        Filter function to hide this tab when PL is determined via direct
+        SIL entry.
+        """
+        return not 'SIL' in self.element.attrib['pldet']
+
     def show_requirements(self):
         """Filter function to enable the requirements checklist."""
         return self.parent.category != 'Unknown'
@@ -212,6 +219,94 @@ class Category(Tab):
         return '\n'.join(lines)
 
 
+class MTTFD(Tab):
+    """The subsystem MTTFD tab."""
+
+    fields = [
+        (None, 'mttfddet'),
+        ('MTTFD', 'mttfd', 'show_mttfd'),
+        ('Fault exclusion', 'fault_exclusion', 'show_direct'),
+        ('Documentation', 'mttfddocumentation', 'show_direct'),
+        ('Mission time', 'missiontime')
+    ]
+
+    # Mapping for the MTTFD determination method.
+    det_methods = {
+        'detSubItems': 'Determine MTTFD value from blocks',
+        'detDirect': 'Enter MTTFD value directly'
+        }
+
+    def show(self):
+        """
+        Filter method to enable the MTTFD tab only when PL is determined by
+        category, MTTFD, and DCavg.
+        """
+        return self.parent.pl_from_cat
+
+    def show_mttfd(self):
+        """Filter method to enable the MTTFD value."""
+        return (self.parent.mttfd_direct
+                and not self.parent.mttfd_fault_exclusion)
+
+    def show_direct(self):
+        """Filter method to enable fields relevant for direct MTTFD entry."""
+        return self.parent.mttfd_direct
+
+    def format_mttfddet(self, raw):
+        """Formatter for the MTTFD determination method."""
+        return self.det_methods[raw]
+
+    def fault_exclusion(self):
+        """Formatter for the fault exclusion checkbox.
+
+        This is not named per format_<attrib> because the fault exclusion
+        option is derived from the same attribute as the MTTFD value.
+        """
+        return str(self.parent.mttfd_fault_exclusion)
+
+
+class DCavg(Tab):
+    """The subsystem DCavg tab."""
+
+    fields = [
+        (None, 'dcavgdet'),
+        ('Diagnostic coverage', 'dcavg', 'show_direct'),
+        ('Documentation', 'dcavgdocumentation', 'show_direct')
+    ]
+
+    det_methods = {
+        'detSubItems': 'Determine DCavg value from blocks',
+        'detDirect': 'Enter DCavg value directly'
+        }
+
+    def show(self):
+        """Filter function to enable this tab."""
+        include = True
+
+        # Excluded when direct-entry PL/SIL is used.
+        if not (self.parent.pl_from_cat or self.parent.pl_from_cat_simple):
+            include = False
+
+        # Excluded for categories B and 1.
+        if self.parent.category in 'B1':
+            include = False
+
+        # Exclude when PL is determined from subitems and MTTFD is a fault
+        # exclusion.
+        if self.parent.pl_from_cat and self.parent.mttfd_fault_exclusion:
+            include = False;
+
+        return include
+
+    def show_direct(self):
+        """Filter to show fields unique to the direct entry method."""
+        return self.parent.dcavg_direct
+
+    def format_dcavgdet(self, raw):
+        """Formatter for the DCavg method selection."""
+        return self.det_methods[raw]
+
+
 class CCF(Tab):
     """The subsystem CCF tab."""
 
@@ -234,17 +329,16 @@ class CCF(Tab):
         include = True
 
         # CCF is omitted if PL/SIL is entered directly.
-        if 'Direct' in self.element.attrib['pldet']:
+        if not (self.parent.pl_from_cat or self.parent.pl_from_cat_simple):
             include = False
 
         # CCF is omitted for categories less than 2.
-        try:
-            cat = int(self.parent.category)
-        except ValueError:
+        if not self.parent.category in '234':
             include = False
-        else:
-            if cat < 2:
-                include = False
+
+        # CCF is omitted if MTTFD is entered directly.
+        if self.parent.mttfd_direct and self.parent.mttfd_fault_exclusion:
+            include = False
 
         return include
 
@@ -293,16 +387,45 @@ class Subsystem(Node):
     acronym = 'SB'
     parent_attr = 'sfopoid'
     ref_attr = 'equipmentid'
-    tabs = [Documentation, PL, Category, CCF]
+    tabs = [Documentation, PL, Category, MTTFD, DCavg, CCF]
+
+    @property
+    def show_children(self):
+        """Excludes child nodes when MTTFD and DCavg are directly entered."""
+        return not self.mttfd_direct or not self.dcavg_direct
+
+    @property
+    def pl_from_cat(self):
+        """True if PL is determined from category, MTTFD, and DCavg."""
+        return self.element.attrib['pldet'] == 'detSubItems'
+
+    @property
+    def pl_from_cat_simple(self):
+        """
+        True if PL is determined from category and DCavg, using the
+        simplified method.
+        """
+        return self.element.attrib['pldet'] == 'detSubItemsSimple'
 
     @property
     def category(self):
-        """Returns the subsystem category selected in the Category tab.
-
-        This property is placed here, instead of the Category tab, because
-        it is used in multiple tabs.
-        """
+        """Returns the category selected in the Category tab."""
         value = self.element.attrib['cat'][-1]
         if value == 'N':
             value = 'Unknown'
         return value
+
+    @property
+    def mttfd_direct(self):
+        """Logical state of the MTTFD direct entry selection."""
+        return self.element.attrib['mttfddet'] == 'detDirect'
+
+    @property
+    def mttfd_fault_exclusion(self):
+        """Logical state of the MTTFD fault exclusion checkbox."""
+        return self.mttfd_direct and (float(self.element.attrib['mttfd']) < 0)
+
+    @property
+    def dcavg_direct(self):
+        """Logical state of the DCavg direct entry selection."""
+        return self.element.attrib['dcavgdet'] == 'detDirect'
