@@ -330,3 +330,43 @@ class Tab(Base):
             pl = raw[-1].lower()
 
         return pl
+
+    def format_functiontypes(self, raw):
+        """
+        Formats the set of function checkboxes found in subsystem, block, and
+        element nodes.
+        """
+        funcs = [f[3:] for f in raw.split(',')] # Strip the 'fnc' prefix.
+        funcs.sort() # Display order is also alphabetic.
+        return ', '.join(funcs)
+
+    def int_to_bool(self, s):
+        """
+        Converter method for checkbox parameters which are stored as
+        integer attributes: 0 or 1. The given argument can be either
+        an attribute name or the raw value.
+        """
+        # Use an attribute if it exists.
+        try:
+            i = int(self.element.attrib[s])
+
+        # Otherwise, convert the given value directly.
+        except KeyError:
+            i = int(s)
+
+        return i > 0
+
+    def csv_to_int(self, csv):
+        """
+        Converter method to handle values which consist of a comma-separated
+        list of integer options, where the integer is the final two characters
+        in each option. This method strips the prefix, and converts each
+        option to its equivalent integer.
+        """
+        try:
+            return [int(opt.strip()[-2:]) for opt in csv.split(',')]
+
+        # Handle an empty csv strig where split() returns a list containing
+        # an empty string.
+        except ValueError:
+            return []
