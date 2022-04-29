@@ -148,6 +148,14 @@ class Node(Base):
 
         return '\n'.join(lines)
 
+    @property
+    def show_children(self):
+        """
+        Filter property that can be overridden for nodes which selectively
+        exclude their child nodes.
+        """
+        return True
+
     def __str__(self):
         """
         Builds a string containing the all the content for this node and
@@ -162,7 +170,8 @@ class Node(Base):
             lines.append(self.get_content())
 
         # Recursively include child content.
-        lines.extend([str(child) for child in self.children if child.show])
+        if self.show_children:
+            lines.extend([str(child) for child in self.children if child.show])
 
         return '\n\n\n'.join(lines)
 
