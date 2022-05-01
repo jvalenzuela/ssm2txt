@@ -17,11 +17,12 @@ class Base(object):
         self.nodes = nodes
         self.doc = doc
 
+    @property
     def show(self):
-        """Filter function to omit content.
+        """Filter condition to omit content.
 
         This object's content will not be sent to the output if this
-        method returns False.
+        returns False.
 
         Subclasses may override this to dynamically exclude certain types
         of content, such as when SISTEMA alters the available fields based
@@ -214,7 +215,7 @@ class Node(Base):
     def get_tab_content(self):
         """Generates a string containing content output by all tabs."""
         instances = [t(self.element, self.nodes, self.doc) for t in self.tabs]
-        content = [str(i) for i in instances if i.show()]
+        content = [str(i) for i in instances if i.show]
         return '\n\n'.join(content)
 
 
@@ -248,7 +249,8 @@ class Tab(Base):
         # exists, it will take priority over a method name.
         'attrib',
 
-        # Optional string to identify a method to selectively exclude the field.
+        # Optional string to identify a property to selectively exclude the
+        # field.
         'show'
     ]
 
@@ -309,7 +311,7 @@ class Tab(Base):
         1. The field's attrib must name an existing source XML element
            attribute or a method from which the value can be sourced.
 
-        2. If the field contains a show, the method identified by that
+        2. If the field contains a show, the property identified by that
            string returns True.
         """
         # Check if the given attribute or value method exists.
@@ -319,15 +321,12 @@ class Tab(Base):
         except KeyError:
             exists = hasattr(self, field.attrib)
 
-        # Default to True if the show member was omitted.
+        # Check the show property, defaulting to include the content if
+        # a property was not defined.
         if field.show is None:
             show = True
-
-        # If a show member exists, locate the filter method with the same
-        # name and call it to determine if the field is output.
         else:
-            method = getattr(self, field.show)
-            show = method()
+            show = getattr(self, field.show)
 
         return exists and show
 

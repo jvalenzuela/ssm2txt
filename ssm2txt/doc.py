@@ -27,6 +27,7 @@ class Documentation(Tab):
         ('Document', 'document')
     ]
 
+    @property
     def show_cat(self):
         """
         Excludes the Category field in subsystems, which have a dedicated

@@ -44,30 +44,35 @@ class PL(Tab):
         7: 'no application-specific reliability data are available for the components'
     }
 
+    @property
     def show_pl(self):
-        """Filter function to enable fields unique to direct PL entry."""
+        """Filter to enable fields unique to direct PL entry."""
         return self.element.attrib['pldet'] == 'detDirect'
 
+    @property
     def show_sil(self):
-        """Filter function to enable fields unique to direct SIL entry."""
+        """Filter to enable fields unique to direct SIL entry."""
         return self.element.attrib['pldet'] == 'detSILDirect'
 
+    @property
     def show_common_direct(self):
         """
-        Filter function to enable fields common to both direct-entry methods:
+        Filter to enable fields common to both direct-entry methods:
         PL and SIL.
         """
-        return self.show_pl() or self.show_sil()
+        return self.show_pl or self.show_sil
 
+    @property
     def show_plconditions(self):
         """
-        Filter function to enable the list of checked options when not using
+        Filter to enable the list of checked options when not using
         PL/SIL direct entry.
         """
         return self.parent.pl_from_cat or self.parent.pl_from_cat_simple
 
+    @property
     def show_software(self):
-        """Filter function to enable the software PL field."""
+        """Filter to enable the software PL field."""
         return self.element.attrib['pldet'] != 'detSubItemsSimple'
 
     def format_pldet(self, value):
@@ -165,19 +170,22 @@ class Category(Tab):
         10: 'B1234'
     }
 
+    @property
     def show(self):
         """
-        Filter function to hide this tab when PL is determined via direct
+        Filter to hide this tab when PL is determined via direct
         SIL entry.
         """
         return not 'SIL' in self.element.attrib['pldet']
 
+    @property
     def show_requirements(self):
-        """Filter function to enable the requirements checklist."""
+        """Filter to enable the requirements checklist."""
         return self.category != 'Unknown'
 
+    @property
     def show_reduced_test(self):
-        """Filter function to enable the reduced test frequency parameter."""
+        """Filter to enable the reduced test frequency parameter."""
         return self.category == '2'
 
     def format_reducedtestingrate(self, raw):
@@ -206,9 +214,10 @@ class MTTFD(mttfd.MTTFD):
 
     child_type = 'blocks'
 
+    @property
     def show(self):
         """
-        Filter method to enable the MTTFD tab only when PL is determined by
+        Filter to enable the MTTFD tab only when PL is determined by
         category, MTTFD, and DCavg.
         """
         return self.parent.pl_from_cat
@@ -228,8 +237,9 @@ class DCavg(Tab):
         'detDirect': 'Enter DCavg value directly'
         }
 
+    @property
     def show(self):
-        """Filter function to enable this tab."""
+        """Filter to enable this tab."""
         include = True
 
         # Excluded when direct-entry PL/SIL is used.
@@ -247,6 +257,7 @@ class DCavg(Tab):
 
         return include
 
+    @property
     def show_direct(self):
         """Filter to show fields unique to the direct entry method."""
         return self.parent.dcavg_direct
@@ -273,8 +284,9 @@ class CCF(Tab):
         'detDirect': 'Enter CCF evaluation directly'
     }
 
+    @property
     def show(self):
-        """Filter function to selectively omit the CCF tab."""
+        """Filter to selectively omit the CCF tab."""
         include = True
 
         # CCF is omitted if PL/SIL is entered directly.
@@ -291,12 +303,14 @@ class CCF(Tab):
 
         return include
 
+    @property
     def show_measures(self):
-        """Filter method to enable the list of applied measures."""
+        """Filter to enable the list of applied measures."""
         return self.element.attrib['ccfscoredet'] == 'detMeasures'
 
+    @property
     def show_direct(self):
-        """Filter method to enable direct CCF entry fields."""
+        """Filter to enable direct CCF entry fields."""
         return self.element.attrib['ccfscoredet'] == 'detDirect'
 
     def format_ccfscoredet(self, value):

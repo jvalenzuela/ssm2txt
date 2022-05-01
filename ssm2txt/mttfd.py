@@ -51,50 +51,60 @@ class MTTFD(Tab):
         """True when MTTFD is calculated from Lambda/MTTF/MTBF/RDF."""
         return self.element.attrib['mttfddet'] == 'detMTTF'
 
+    @property
     def show_mttfd(self):
-        """Filter method to enable the MTTFD value."""
+        """Filter to enable the MTTFD value."""
         return self.mttfd_direct and not self.mttfd_fault_exclusion
 
+    @property
     def show_direct(self):
-        """Filter method to enable fields relevant to direct MTTFD entry."""
+        """Filter to enable fields relevant to direct MTTFD entry."""
         return self.mttfd_direct
 
+    @property
     def show_b10(self):
-        """Filter method to display fields relevant to determination via B10."""
+        """Filter to display fields relevant to determination via B10."""
         return (self.determine_with_b10
                 and self.element.attrib['calcb10ddet'] == 'calcB10dB10')
 
+    @property
     def show_b10d(self):
-        """Filter method to display the B10D field."""
+        """Filter to display the B10D field."""
         return (self.determine_with_b10
                 and self.element.attrib['calcb10ddet'] == 'calcB10dDirect')
 
+    @property
     def show_nop(self):
-        """Filter method to display fields relevant to B10/B10D nop."""
+        """Filter to display fields relevant to B10/B10D nop."""
         return self.determine_with_b10
 
+    @property
     def show_rdf_mttf(self):
-        """Filter method to display the RDF field associated with MTTF."""
+        """Filter to display the RDF field associated with MTTF."""
         return self.determine_with_mttf
 
+    @property
     def show_lambda(self):
-        """Filter method to display the Lambda field."""
+        """Filter to display the Lambda field."""
         return (self.determine_with_mttf
                 and self.element.attrib['calcmttfddet'] == 'calcMTTFdLambda')
 
+    @property
     def show_mttf(self):
-        """Filter method to display the MTTF field."""
+        """Filter to display the MTTF field."""
         return (self.determine_with_mttf
                 and self.element.attrib['calcmttfddet'] == 'calcMTTFdMTTF')
 
+    @property
     def show_mtbf(self):
-        """Filter method to display the MTBF field."""
+        """Filter to display the MTBF field."""
         return (self.determine_with_mttf
                 and self.element.attrib['calcmttfddet'] == 'calcMTTFdMTBF')
 
+    @property
     def show_doc(self):
         """
-        Filter method to omit the Documentation field when MTTFD is determined
+        Filter to omit the Documentation field when MTTFD is determined
         from child nodes.
         """
         return self.element.attrib['mttfddet'] != 'detSubItems'

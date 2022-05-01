@@ -60,16 +60,18 @@ class PLr(Tab):
         '1': '1'
         }
 
+    @property
     def show_pl_graph(self):
         """
-        Filter function to enable fields associated with determining PLr from
+        Filter to enable fields associated with determining PLr from
         the risk graph.
         """
         return self.element.attrib['plrdet'] == 'detMeasures'
 
+    @property
     def show_pl_direct(self):
         """
-        Filter function to enable fields associated with entering the PLr
+        Filter to enable fields associated with entering the PLr
         value directly.
         """
         return self.element.attrib['plrdet'] == 'detDirect'
