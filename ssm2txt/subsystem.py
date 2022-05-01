@@ -5,26 +5,7 @@ subsystem level of the project tree.
 
 
 from ssm2txt.base import (Node, Tab)
-
-
-class Documentation(Tab):
-    """The subsystem Documentation tab."""
-
-    fields = [
-        ('Name of Subsystem', 'name'),
-        ('Reference designator', 'equipmentid'),
-        ('Inventory number', 'inventoryno'),
-        ('Device Manufacturer', 'manufacturer'),
-        ('Device Identifier', 'deviceid'),
-        ('Device group', 'devicegroup'),
-        ('Part number', 'partno'),
-        ('Revision', 'revision'),
-        ('Function', 'functiontypes'),
-        ('Use case', 'usecase'),
-        ('Description of the use case', 'usecasedocumentation'),
-        ('Documentation', 'description'),
-        ('Document', 'document')
-    ]
+from ssm2txt.doc import Documentation
 
 
 class PL(Tab):

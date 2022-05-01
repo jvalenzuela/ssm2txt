@@ -292,10 +292,23 @@ class Tab(Base):
         return '\n'.join(lines)
 
     def show_field(self, field):
+        """Determines if a field should be output.
+
+        This is based on two conditions:
+
+        1. The field's attrib must name an existing source XML element
+           attribute or a method from which the value can be sourced.
+
+        2. If the field contains a show, the method identified by that
+           string returns True.
         """
-        Determines if a field should be output based on the show member
-        in the field's definition.
-        """
+        # Check if the given attribute or value method exists.
+        try:
+            self.element.attrib[field.attrib]
+            exists = True
+        except KeyError:
+            exists = hasattr(self, field.attrib)
+
         # Default to True if the show member was omitted.
         if field.show is None:
             show = True
@@ -306,7 +319,7 @@ class Tab(Base):
             method = getattr(self, field.show)
             show = method()
 
-        return show
+        return exists and show
 
     def field_value(self, attrib):
         """Acquires the string to be printed as the field's value.
@@ -352,15 +365,6 @@ class Tab(Base):
             pl = raw[-1].lower()
 
         return pl
-
-    def format_functiontypes(self, raw):
-        """
-        Formats the set of function checkboxes found in subsystem, block, and
-        element nodes.
-        """
-        funcs = [f[3:] for f in raw.split(',')] # Strip the 'fnc' prefix.
-        funcs.sort() # Display order is also alphabetic.
-        return ', '.join(funcs)
 
     def int_to_bool(self, s):
         """
