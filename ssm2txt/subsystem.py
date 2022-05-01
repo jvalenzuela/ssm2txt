@@ -18,8 +18,8 @@ class PL(Tab):
         ('Safety Integrity Level', 'sil', 'show_sil'),
         ('PL/SIL linked to PFHD', 'isplpfhbind', 'show_common_direct'),
         ('PFHD', 'pfh', 'show_common_direct'),
-        ('Software suitable up to PL', 'pldirectsoftware', 'show_common_direct'),
         (None, 'plconditions', 'show_plconditions'),
+        ('Software suitable up to PL', 'pldirectsoftware', 'show_software'),
         ('Documentation', 'pldocumentation'),
         ('Mission time', 'missiontime', 'show_common_direct')
     ]
@@ -65,6 +65,10 @@ class PL(Tab):
         PL/SIL direct entry.
         """
         return self.parent.pl_from_cat or self.parent.pl_from_cat_simple
+
+    def show_software(self):
+        """Filter function to enable the software PL field."""
+        return self.element.attrib['pldet'] != 'detSubItemsSimple'
 
     def format_pldet(self, value):
         """Formatting method for the selected method to determine PL."""
