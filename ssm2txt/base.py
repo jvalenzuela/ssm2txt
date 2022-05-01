@@ -30,6 +30,55 @@ class Base(object):
         """
         return True
 
+    @property
+    def oid(self):
+        """The OID string assigned to this element."""
+        return self.element.attrib['oid']
+
+    @property
+    def node(self):
+        """The directly-associated node object.
+
+        This will be self for Node instances, or the parent node for Tabs.
+        """
+        return self.nodes[self.oid]
+
+    @property
+    def safty_function(self):
+        """The node object for the containing safety function."""
+        return self.node if self.node.acronym == 'SF' else self.subsystem.parent
+
+    @property
+    def subsystem(self):
+        """The node object for the containing subsystem."""
+        return self.node if self.node.acronym == 'SB' else self.channel.parent
+
+    @property
+    def channel(self):
+        """The node object for the containing channel."""
+        return self.node if self.node.acronym in 'CH TE' else self.block.parent
+
+    @property
+    def block(self):
+        """The node object for the containing block."""
+        return self.node if self.node.acronym == 'BL' \
+            else self.sistema_element.parent
+
+    @property
+    def sistema_element(self):
+        """
+        The node object for the containing element in the SISTEMA project
+        tree, not the XML element.
+        """
+        if self.node.acronym == 'EL':
+            return self.node
+
+        # This exception prevents parent nodes from referencing children,
+        # e.g., subsystem.block is ambiguous. Absolute references to
+        # containing node objects only works bottom-up because each node
+        # has exactly one parent.
+        raise AttributeError('Invalid reference to child node type.')
+
     def format_cat(self, raw):
         """Formatter for category fields."""
 
@@ -89,11 +138,6 @@ class Node(Base):
             parent = self.nodes[parent_oid]
 
         return parent
-
-    @property
-    def oid(self):
-        """The OID string assigned to this element."""
-        return self.element.attrib['oid']
 
     def register_with_parent(self):
         """
