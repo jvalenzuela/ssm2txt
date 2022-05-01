@@ -42,6 +42,16 @@ class Base(object):
         """Returns the object's category."""
         return self.format_cat(self.element.attrib['cat'])
 
+    @property
+    def mttfd_direct(self):
+        """Logical state of the MTTFD direct entry selection."""
+        return self.element.attrib['mttfddet'] == 'detDirect'
+
+    @property
+    def mttfd_fault_exclusion(self):
+        """Logical state of the MTTFD fault exclusion checkbox."""
+        return self.mttfd_direct and (float(self.element.attrib['mttfd']) < 0)
+
 
 class Node(Base):
     """
@@ -396,3 +406,10 @@ class Tab(Base):
         # an empty string.
         except ValueError:
             return []
+
+    def percent(self, s):
+        """
+        Converts a string representing a floating-point value, typically 0-1,
+        into a percentage.
+        """
+        return str(float(s) * 100)

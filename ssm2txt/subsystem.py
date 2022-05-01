@@ -6,6 +6,7 @@ subsystem level of the project tree.
 
 from ssm2txt.base import (Node, Tab)
 from ssm2txt.doc import Documentation
+import ssm2txt.mttfd as mttfd
 
 
 class PL(Tab):
@@ -196,22 +197,10 @@ class Category(Tab):
         return '\n'.join(lines)
 
 
-class MTTFD(Tab):
+class MTTFD(mttfd.MTTFD):
     """The subsystem MTTFD tab."""
 
-    fields = [
-        (None, 'mttfddet'),
-        ('MTTFD', 'mttfd', 'show_mttfd'),
-        ('Fault exclusion', 'fault_exclusion', 'show_direct'),
-        ('Documentation', 'mttfddocumentation', 'show_direct'),
-        ('Mission time', 'missiontime')
-    ]
-
-    # Mapping for the MTTFD determination method.
-    det_methods = {
-        'detSubItems': 'Determine MTTFD value from blocks',
-        'detDirect': 'Enter MTTFD value directly'
-        }
+    child_type = 'blocks'
 
     def show(self):
         """
@@ -219,27 +208,6 @@ class MTTFD(Tab):
         category, MTTFD, and DCavg.
         """
         return self.parent.pl_from_cat
-
-    def show_mttfd(self):
-        """Filter method to enable the MTTFD value."""
-        return (self.parent.mttfd_direct
-                and not self.parent.mttfd_fault_exclusion)
-
-    def show_direct(self):
-        """Filter method to enable fields relevant for direct MTTFD entry."""
-        return self.parent.mttfd_direct
-
-    def format_mttfddet(self, raw):
-        """Formatter for the MTTFD determination method."""
-        return self.det_methods[raw]
-
-    def fault_exclusion(self):
-        """Formatter for the fault exclusion checkbox.
-
-        This is not named per format_<attrib> because the fault exclusion
-        option is derived from the same attribute as the MTTFD value.
-        """
-        return str(self.parent.mttfd_fault_exclusion)
 
 
 class DCavg(Tab):
@@ -383,16 +351,6 @@ class Subsystem(Node):
         simplified method.
         """
         return self.element.attrib['pldet'] == 'detSubItemsSimple'
-
-    @property
-    def mttfd_direct(self):
-        """Logical state of the MTTFD direct entry selection."""
-        return self.element.attrib['mttfddet'] == 'detDirect'
-
-    @property
-    def mttfd_fault_exclusion(self):
-        """Logical state of the MTTFD fault exclusion checkbox."""
-        return self.mttfd_direct and (float(self.element.attrib['mttfd']) < 0)
 
     @property
     def dcavg_direct(self):
