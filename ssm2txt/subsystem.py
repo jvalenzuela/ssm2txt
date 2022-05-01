@@ -266,6 +266,10 @@ class DCavg(Tab):
         """Formatter for the DCavg method selection."""
         return self.det_methods[raw]
 
+    def format_dcavg(self, raw):
+        """Formatter for the diagnostic coverage parameter."""
+        return self.percent(raw)
+
 
 class CCF(Tab):
     """The subsystem CCF tab."""
