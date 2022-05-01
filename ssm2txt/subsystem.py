@@ -335,7 +335,6 @@ class Subsystem(Node):
 
     acronym = 'SB'
     parent_attr = 'sfopoid'
-    ref_attr = 'equipmentid'
     tabs = [Documentation, PL, Category, MTTFD, DCavg, CCF]
 
     @property
