@@ -353,8 +353,22 @@ class Subsystem(Node):
 
     @property
     def show_children(self):
-        """Excludes child nodes when MTTFD and DCavg are directly entered."""
-        return not self.mttfd_direct or not self.dcavg_direct
+        """Filter condition to exclude all channels."""
+        show_channels = True
+
+        # Exclude channels if PL/SIL is entered directly.
+        if not (self.pl_from_cat or self.pl_from_cat_simple):
+            show_channels = False
+
+        # Exclude channels if MTTFD and DCavg are entered directly.
+        if self.mttfd_direct and self.dcavg_direct:
+            show_channels = False
+
+        # Exclude channels if the MTTFD defines a fault exclusion.
+        if self.mttfd_fault_exclusion:
+            show_channels = False
+
+        return show_channels
 
     @property
     def pl_from_cat(self):

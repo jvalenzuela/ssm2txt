@@ -38,9 +38,17 @@ class Channel(Node):
     def show(self):
         """
         All channel types are always present in the source XML, so this
-        method filters out those not relevant to the subsystem's category.
+        filters out those not relevant based on subsystem configuration.
         """
-        return self.ch_type in self.categories[self.parent.category]
+        # Exclude channels not part of the subsystem's category.
+        include = self.ch_type in self.categories[self.parent.category]
+
+        # Test channels are always excluded if the parent subsystem
+        # uses MTTFD direct entry.
+        if (self.ch_type == 'chTest') and self.parent.mttfd_direct:
+            include = False
+
+        return include
 
     @property
     def name(self):
