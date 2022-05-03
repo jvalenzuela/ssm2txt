@@ -221,7 +221,7 @@ class CCF(Tab):
         back to this node via the componentopoid attribute.
         """
         path = "tables/table[@table_name='ccfmeasureops']/" \
-            "rows/row[@componentopoid='{0}']".format(self.parent.oid)
+            "rows/row[@componentopoid='{0}']".format(self.oid)
         return self.doc.findall(path)
 
 
