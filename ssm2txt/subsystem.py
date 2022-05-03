@@ -5,8 +5,20 @@ subsystem level of the project tree.
 
 
 from ssm2txt.base import (Node, Tab)
-from ssm2txt.doc import Documentation
+import ssm2txt.doc as doc
 import ssm2txt.mttfd as mttfd
+
+
+class Documentation(doc.Documentation):
+    """The Documentation tab."""
+
+    @property
+    def show_cat(self):
+        """
+        Exclude the Category field; subsystems have a dedicated tab for this
+        field.
+        """
+        return False
 
 
 class PL(Tab):
@@ -14,14 +26,14 @@ class PL(Tab):
 
     fields = [
         (None, 'pldet'),
-        ('Performance Level', 'pl', 'show_pl'),
-        ('Safety Integrity Level', 'sil', 'show_sil'),
-        ('PL/SIL linked to PFHD', 'isplpfhbind', 'show_common_direct'),
-        ('PFHD', 'pfh', 'show_common_direct'),
-        (None, 'plconditions', 'show_plconditions'),
-        ('Software suitable up to PL', 'pldirectsoftware', 'show_software'),
+        ('Performance Level', 'pl'),
+        ('Safety Integrity Level', 'sil'),
+        ('PL/SIL linked to PFHD', 'isplpfhbind'),
+        ('PFHD', 'pfh'),
+        (None, 'plconditions'),
+        ('Software suitable up to PL', 'pldirectsoftware'),
         ('Documentation', 'pldocumentation'),
-        ('Mission time', 'missiontime', 'show_common_direct')
+        ('Mission time', 'missiontime')
     ]
 
     # Mapping for the PL determination method selection.
@@ -44,37 +56,6 @@ class PL(Tab):
         7: 'no application-specific reliability data are available for the components'
     }
 
-    @property
-    def show_pl(self):
-        """Filter to enable fields unique to direct PL entry."""
-        return self.element.attrib['pldet'] == 'detDirect'
-
-    @property
-    def show_sil(self):
-        """Filter to enable fields unique to direct SIL entry."""
-        return self.element.attrib['pldet'] == 'detSILDirect'
-
-    @property
-    def show_common_direct(self):
-        """
-        Filter to enable fields common to both direct-entry methods:
-        PL and SIL.
-        """
-        return self.show_pl or self.show_sil
-
-    @property
-    def show_plconditions(self):
-        """
-        Filter to enable the list of checked options when not using
-        PL/SIL direct entry.
-        """
-        return self.parent.pl_from_cat or self.parent.pl_from_cat_simple
-
-    @property
-    def show_software(self):
-        """Filter to enable the software PL field."""
-        return self.element.attrib['pldet'] != 'detSubItemsSimple'
-
     def format_pldet(self, value):
         """Formatting method for the selected method to determine PL."""
         return self.methods[value]
@@ -91,17 +72,9 @@ class PL(Tab):
         """
         Formatting function for the checklist of conditions when PL or SIL is
         not entered directly.
-
-        The source attribute can contain all available options, even those
-        not displayed based on the PL determination method.
         """
         keys = self.csv_to_int(value)
-
-        # Options 5-7 are only applicable if the simplified method is selected.
-        limit = 7 if self.parent.pl_from_cat_simple else 4
-        filtered_keys = [k for k in keys if k <= limit]
-
-        return '\n'.join([self.conditions[k] for k in filtered_keys])
+        return '\n'.join([self.conditions[k] for k in keys])
 
     def pl(self):
         """
@@ -138,8 +111,8 @@ class Category(Tab):
 
     fields = [
         ('Category of subsystem', 'cat'),
-        ('Reduced test frequency', 'reducedtestingrate', 'show_reduced_test'),
-        ('Requirements for the category', 'catconditions', 'show_requirements'),
+        ('Reduced test frequency', 'reducedtestingrate'),
+        ('Requirements for the category', 'catconditions'),
         ('Documentation', 'catdocumentation'),
         ('Source', 'catstandard'),
         ('File', 'catstandardfile')
@@ -157,37 +130,6 @@ class Category(Tab):
         10: 'Accordance with relevant standards to withstand the expected influences.'
     }
 
-    # Mapping to indicate the requirements available for each category. The
-    # keys are the same as the requirements dict, and the values are the
-    # set of categories which include that requirement.
-    req_show = {
-        1: 'B1234',
-        2: '1',
-        3: '1234',
-        4: '34',
-        5: '4',
-        6: '2',
-        10: 'B1234'
-    }
-
-    @property
-    def show(self):
-        """
-        Filter to hide this tab when PL is determined via direct
-        SIL entry.
-        """
-        return not 'SIL' in self.element.attrib['pldet']
-
-    @property
-    def show_requirements(self):
-        """Filter to enable the requirements checklist."""
-        return self.category != 'Unknown'
-
-    @property
-    def show_reduced_test(self):
-        """Filter to enable the reduced test frequency parameter."""
-        return self.category == '2'
-
     def format_reducedtestingrate(self, raw):
         """Formatter for the reduced test frequency checkbox parameter."""
         return str(self.int_to_bool(raw))
@@ -196,15 +138,12 @@ class Category(Tab):
         """Formatter for the category requirements checklist."""
         keys = self.csv_to_int(raw)
 
-        # Remove options not applicable to the selected category.
-        filtered = [k for k in keys if self.category in self.req_show[k]]
-
         # Start with an empty line so the first item begins on the line
         # following the field title.
         lines = ['']
 
         # Convert the option keys to their relevant strings.
-        lines.extend([self.requirements[k] for k in filtered])
+        lines.extend([self.requirements[k] for k in keys])
 
         return '\n'.join(lines)
 
@@ -214,53 +153,20 @@ class MTTFD(mttfd.MTTFD):
 
     child_type = 'blocks'
 
-    @property
-    def show(self):
-        """
-        Filter to enable the MTTFD tab only when PL is determined by
-        category, MTTFD, and DCavg.
-        """
-        return self.parent.pl_from_cat
-
 
 class DCavg(Tab):
     """The subsystem DCavg tab."""
 
     fields = [
         (None, 'dcavgdet'),
-        ('Diagnostic coverage', 'dcavg', 'show_direct'),
-        ('Documentation', 'dcavgdocumentation', 'show_direct')
+        ('Diagnostic coverage', 'dcavg'),
+        ('Documentation', 'dcavgdocumentation')
     ]
 
     det_methods = {
         'detSubItems': 'Determine DCavg value from blocks',
         'detDirect': 'Enter DCavg value directly'
         }
-
-    @property
-    def show(self):
-        """Filter to enable this tab."""
-        include = True
-
-        # Excluded when direct-entry PL/SIL is used.
-        if not (self.parent.pl_from_cat or self.parent.pl_from_cat_simple):
-            include = False
-
-        # Excluded for categories B and 1.
-        if self.category in 'B1':
-            include = False
-
-        # Exclude when PL is determined from subitems and MTTFD is a fault
-        # exclusion.
-        if self.parent.pl_from_cat and self.parent.mttfd_fault_exclusion:
-            include = False;
-
-        return include
-
-    @property
-    def show_direct(self):
-        """Filter to show fields unique to the direct entry method."""
-        return self.parent.dcavg_direct
 
     def format_dcavgdet(self, raw):
         """Formatter for the DCavg method selection."""
@@ -276,8 +182,8 @@ class CCF(Tab):
 
     fields = [
         (None, 'ccfscoredet'),
-        (None, 'list_measures', 'show_measures'),
-        ('Total points', 'ccfscore', 'show_direct'),
+        (None, 'list_measures'),
+        ('Total points', 'ccfscore'),
         ('Documentation', 'ccfdocumentation'),
         ('Document', 'ccfdocument')
     ]
@@ -287,35 +193,6 @@ class CCF(Tab):
         'detMeasures': 'Select applied measures to evaluate CCF',
         'detDirect': 'Enter CCF evaluation directly'
     }
-
-    @property
-    def show(self):
-        """Filter to selectively omit the CCF tab."""
-        include = True
-
-        # CCF is omitted if PL/SIL is entered directly.
-        if not (self.parent.pl_from_cat or self.parent.pl_from_cat_simple):
-            include = False
-
-        # CCF is omitted for categories less than 2.
-        if not self.category in '234':
-            include = False
-
-        # CCF is omitted if MTTFD is entered directly.
-        if self.parent.mttfd_direct and self.parent.mttfd_fault_exclusion:
-            include = False
-
-        return include
-
-    @property
-    def show_measures(self):
-        """Filter to enable the list of applied measures."""
-        return self.element.attrib['ccfscoredet'] == 'detMeasures'
-
-    @property
-    def show_direct(self):
-        """Filter to enable direct CCF entry fields."""
-        return self.element.attrib['ccfscoredet'] == 'detDirect'
 
     def format_ccfscoredet(self, value):
         """Formatter for the CCF method selection."""
@@ -354,40 +231,3 @@ class Subsystem(Node):
     acronym = 'SB'
     parent_attr = 'sfopoid'
     tabs = [Documentation, PL, Category, MTTFD, DCavg, CCF]
-
-    @property
-    def show_children(self):
-        """Filter condition to exclude all channels."""
-        show_channels = True
-
-        # Exclude channels if PL/SIL is entered directly.
-        if not (self.pl_from_cat or self.pl_from_cat_simple):
-            show_channels = False
-
-        # Exclude channels if MTTFD and DCavg are entered directly.
-        if self.mttfd_direct and self.dcavg_direct:
-            show_channels = False
-
-        # Exclude channels if the MTTFD defines a fault exclusion.
-        if self.mttfd_fault_exclusion:
-            show_channels = False
-
-        return show_channels
-
-    @property
-    def pl_from_cat(self):
-        """True if PL is determined from category, MTTFD, and DCavg."""
-        return self.element.attrib['pldet'] == 'detSubItems'
-
-    @property
-    def pl_from_cat_simple(self):
-        """
-        True if PL is determined from category and DCavg, using the
-        simplified method.
-        """
-        return self.element.attrib['pldet'] == 'detSubItemsSimple'
-
-    @property
-    def dcavg_direct(self):
-        """Logical state of the DCavg direct entry selection."""
-        return self.element.attrib['dcavgdet'] == 'detDirect'

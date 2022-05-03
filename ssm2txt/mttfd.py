@@ -11,25 +11,27 @@ class MTTFD(Tab):
 
     fields = [
         (None, 'mttfddet'),
-        ('MTTFD', 'mttfd', 'show_mttfd'),
-        ('Fault exclusion', 'fault_exclusion', 'show_direct'),
+        ('MTTFD', 'mttfd'),
+        ('Fault exclusion', 'fault_exclusion_checkbox'),
 
-        # Fields enabled when using B10D/B10.
-        ('B10D', 'b10d', 'show_b10d'),
-        ('B10', 'b10', 'show_b10'),
-        ('RDF', 'rdfb10', 'show_b10'),
-        ('nop', 'nop', 'show_nop'),
-        ('d_op', 'nopday', 'show_nop'),
-        ('h_op', 'nophour', 'show_nop'),
-        ('t_cycle', 'nopcycle', 'show_nop'),
+        # B10D/B10 fields.
+        ('Use B10/B10D', 'calcb10ddet'),
+        ('B10', 'b10'),
+        ('B10D', 'b10d'),
+        ('B10 RDF', 'rdfb10'),
+        ('nop', 'nop'),
+        ('d_op', 'nopday'),
+        ('h_op', 'nophour'),
+        ('t_cycle', 'nopcycle'),
 
-        # Fields enabled when using Lambda/MTTF/MTBF/RDF.
-        ('Lambda', 'lambda', 'show_lambda'),
-        ('MTTF', 'mttf', 'show_mttf'),
-        ('MTBF', 'mtbf', 'show_mtbf'),
-        ('RDF', 'rdfmttf', 'show_rdf_mttf'),
+        # Lambda/MTTF/MTBF/RDF fields.
+        ('Use Lambda/MTTF/MTBF', 'calcmttfddet'),
+        ('Lambda', 'lambda'),
+        ('MTTF', 'mttf'),
+        ('MTBF', 'mtbf'),
+        ('Lambda/MTTF/MTBF RDF', 'rdfmttf'),
 
-        ('Documentation', 'mttfddocumentation', 'show_doc'),
+        ('Documentation', 'mttfddocumentation'),
         ('Mission time', 'missiontime')
     ]
 
@@ -41,81 +43,34 @@ class MTTFD(Tab):
         'detMTTF': 'Determine MTTFD value from Lambda/MTTF/MTBF and RDF value'
         }
 
-    @property
-    def determine_with_b10(self):
-        """True when MTTFD is calculated from B10D/B10"""
-        return self.element.attrib['mttfddet'] == 'detB10D'
-
-    @property
-    def determine_with_mttf(self):
-        """True when MTTFD is calculated from Lambda/MTTF/MTBF/RDF."""
-        return self.element.attrib['mttfddet'] == 'detMTTF'
-
-    @property
-    def show_mttfd(self):
-        """Filter to enable the MTTFD value."""
-        return self.mttfd_direct and not self.mttfd_fault_exclusion
-
-    @property
-    def show_direct(self):
-        """Filter to enable fields relevant to direct MTTFD entry."""
-        return self.mttfd_direct
-
-    @property
-    def show_b10(self):
-        """Filter to display fields relevant to determination via B10."""
-        return (self.determine_with_b10
-                and self.element.attrib['calcb10ddet'] == 'calcB10dB10')
-
-    @property
-    def show_b10d(self):
-        """Filter to display the B10D field."""
-        return (self.determine_with_b10
-                and self.element.attrib['calcb10ddet'] == 'calcB10dDirect')
-
-    @property
-    def show_nop(self):
-        """Filter to display fields relevant to B10/B10D nop."""
-        return self.determine_with_b10
-
-    @property
-    def show_rdf_mttf(self):
-        """Filter to display the RDF field associated with MTTF."""
-        return self.determine_with_mttf
-
-    @property
-    def show_lambda(self):
-        """Filter to display the Lambda field."""
-        return (self.determine_with_mttf
-                and self.element.attrib['calcmttfddet'] == 'calcMTTFdLambda')
-
-    @property
-    def show_mttf(self):
-        """Filter to display the MTTF field."""
-        return (self.determine_with_mttf
-                and self.element.attrib['calcmttfddet'] == 'calcMTTFdMTTF')
-
-    @property
-    def show_mtbf(self):
-        """Filter to display the MTBF field."""
-        return (self.determine_with_mttf
-                and self.element.attrib['calcmttfddet'] == 'calcMTTFdMTBF')
-
-    @property
-    def show_doc(self):
-        """
-        Filter to omit the Documentation field when MTTFD is determined
-        from child nodes.
-        """
-        return self.element.attrib['mttfddet'] != 'detSubItems'
+    # Mapping for the B10/B10D pull-down option.
+    b10_options = {
+        'calcB10dB10': 'B10',
+        'calcB10dDirect': 'B10D'
+        }
 
     def format_mttfddet(self, raw):
         """Formatter for the MTTFD determination method."""
         return self.det_methods[raw].format(self.child_type)
 
+    def format_mttfd(self, raw):
+        """Formmater for the MTTFD field."""
+        return 'FE' if self.fault_exclusion else raw
+
+    def format_calcb10ddet(self, raw):
+        """
+        Formatter for the B10/B10D selection when MTTFD is determined by
+        B10/B10D.
+        """
+        return self.b10_options[raw]
+
     def format_rdfb10(self, raw):
         """Formatter for the B10 RDF field."""
         return self.format_rdf(raw)
+
+    def format_calcmttfddet(self, raw):
+        """Formatter for the Lambda/MTTF/MTBF pull-down selection."""
+        return raw[9:] # Strip off the 'calcMTTFd' prefix.
 
     def format_rdfmttf(self, raw):
         """Formatter for the MTTF RDF field."""
@@ -125,13 +80,9 @@ class MTTFD(Tab):
         """Formatter for all RDF values."""
         return self.percent(raw)
 
-    def fault_exclusion(self):
-        """Formatter for the fault exclusion checkbox.
-
-        This is not named per format_<attrib> because the fault exclusion
-        option is derived from the same attribute as the MTTFD value.
-        """
-        return str(self.mttfd_fault_exclusion)
+    def fault_exclusion_checkbox(self):
+        """Formatter for the fault exclusion checkbox."""
+        return str(self.fault_exclusion)
 
     def format_nop(self, raw):
         """Formatter method for B10/B10D nop field."""
@@ -139,3 +90,12 @@ class MTTFD(Tab):
             return 'INF'
         else:
             return raw
+
+    @property
+    def fault_exclusion(self):
+        """Logical state of the fault exclusion checkbox.
+
+        This field doesn't have a dedicated attribute, but is derived from
+        the mttfd value.
+        """
+        return float(self.element.attrib['mttfd']) < 0

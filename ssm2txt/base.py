@@ -18,19 +18,6 @@ class Base(object):
         self.doc = doc
 
     @property
-    def show(self):
-        """Filter condition to omit content.
-
-        This object's content will not be sent to the output if this
-        returns False.
-
-        Subclasses may override this to dynamically exclude certain types
-        of content, such as when SISTEMA alters the available fields based
-        on some parameter.
-        """
-        return True
-
-    @property
     def oid(self):
         """The OID string assigned to this element."""
         return self.element.attrib['oid']
@@ -42,65 +29,6 @@ class Base(object):
         This will be self for Node instances, or the parent node for Tabs.
         """
         return self.nodes[self.oid]
-
-    @property
-    def safty_function(self):
-        """The node object for the containing safety function."""
-        return self.node if self.node.acronym == 'SF' else self.subsystem.parent
-
-    @property
-    def subsystem(self):
-        """The node object for the containing subsystem."""
-        return self.node if self.node.acronym == 'SB' else self.channel.parent
-
-    @property
-    def channel(self):
-        """The node object for the containing channel."""
-        return self.node if self.node.acronym in 'CH TE' else self.block.parent
-
-    @property
-    def block(self):
-        """The node object for the containing block."""
-        return self.node if self.node.acronym == 'BL' \
-            else self.sistema_element.parent
-
-    @property
-    def sistema_element(self):
-        """
-        The node object for the containing element in the SISTEMA project
-        tree, not the XML element.
-        """
-        if self.node.acronym == 'EL':
-            return self.node
-
-        # This exception prevents parent nodes from referencing children,
-        # e.g., subsystem.block is ambiguous. Absolute references to
-        # containing node objects only works bottom-up because each node
-        # has exactly one parent.
-        raise AttributeError('Invalid reference to child node type.')
-
-    def format_cat(self, raw):
-        """Formatter for category fields."""
-
-        value = raw[-1]
-        if value == 'N':
-            value = 'Unknown'
-        return value
-
-    @property
-    def category(self):
-        """Returns the object's category."""
-        return self.format_cat(self.element.attrib['cat'])
-
-    @property
-    def mttfd_direct(self):
-        """Logical state of the MTTFD direct entry selection."""
-        return self.element.attrib['mttfddet'] == 'detDirect'
-
-    @property
-    def mttfd_fault_exclusion(self):
-        """Logical state of the MTTFD fault exclusion checkbox."""
-        return self.mttfd_direct and (float(self.element.attrib['mttfd']) < 0)
 
 
 class Node(Base):
@@ -216,14 +144,6 @@ class Node(Base):
 
         return '\n'.join(lines)
 
-    @property
-    def show_children(self):
-        """
-        Filter property that can be overridden for nodes which selectively
-        exclude their child nodes.
-        """
-        return True
-
     def __str__(self):
         """
         Builds a string containing the all the content for this node and
@@ -238,8 +158,7 @@ class Node(Base):
             lines.append(self.get_content())
 
         # Recursively include child content.
-        if self.show_children:
-            lines.extend([str(child) for child in self.children if child.show])
+        lines.extend([str(child) for child in self.children])
 
         return '\n\n\n'.join(lines)
 
@@ -259,9 +178,8 @@ class Node(Base):
     def get_tab_content(self):
         """Generates a string containing content output by all tabs."""
         instances = [t(self.element, self.nodes, self.doc) for t in self.tabs]
-        content = [str(i) for i in instances if i.show]
+        content = [str(i) for i in instances]
         return '\n\n'.join(content)
-
 
 
 class Tab(Base):
@@ -456,3 +374,10 @@ class Tab(Base):
         into a percentage.
         """
         return str(float(s) * 100)
+
+    def format_cat(self, raw):
+        """Formatter for category fields."""
+        value = raw[-1]
+        if value == 'N':
+            value = 'Unknown'
+        return value

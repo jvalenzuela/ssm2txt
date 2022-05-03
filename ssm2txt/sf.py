@@ -32,20 +32,18 @@ class PLr(Tab):
         (None, 'plrdet'),
 
         # Fields for direct PLr entry.
-        ('Required Performance Level', 'plr', 'show_pl_direct'),
-        ('Documentation', 'plrdocumentation', 'show_pl_direct'),
-        ('Document', 'plrdocument', 'show_pl_direct'),
-        ('Source', 'plrstandard', 'show_pl_direct'),
-        ('File', 'plrstandardfile', 'show_pl_direct'),
+        ('Required Performance Level', 'plr'),
+        ('Documentation', 'plrdocumentation'),
+        ('Document', 'plrdocument'),
+        ('Source', 'plrstandard'),
+        ('File', 'plrstandardfile'),
 
         # Fields for PLr risk graph.
-        ('Severity of injury', 'riskparams', 'show_pl_graph'),
-        ('Frequency and/or exposure times to hazard', 'riskparamf',
-         'show_pl_graph'),
-        ('Possibility of avoiding hazard or limiting harm', 'riskparamp',
-         'show_pl_graph'),
-        ('Documentation', 'plrgraphdocumentation', 'show_pl_graph'),
-        ('Document', 'plrgraphdocument', 'show_pl_graph')
+        ('Severity of injury', 'riskparams'),
+        ('Frequency and/or exposure times to hazard', 'riskparamf'),
+        ('Possibility of avoiding hazard or limiting harm', 'riskparamp'),
+        ('Documentation', 'plrgraphdocumentation'),
+        ('Document', 'plrgraphdocument')
     ]
 
     # Translations for the PLr determination selection.
@@ -59,22 +57,6 @@ class PLr(Tab):
         '0': '2',
         '1': '1'
         }
-
-    @property
-    def show_pl_graph(self):
-        """
-        Filter to enable fields associated with determining PLr from
-        the risk graph.
-        """
-        return self.element.attrib['plrdet'] == 'detMeasures'
-
-    @property
-    def show_pl_direct(self):
-        """
-        Filter to enable fields associated with entering the PLr
-        value directly.
-        """
-        return self.element.attrib['plrdet'] == 'detDirect'
 
     def format_plrdet(self, value):
         """Formatting function for the determination method selection."""

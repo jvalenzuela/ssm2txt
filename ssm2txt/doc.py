@@ -29,11 +29,8 @@ class Documentation(Tab):
 
     @property
     def show_cat(self):
-        """
-        Excludes the Category field in subsystems, which have a dedicated
-        Category tab.
-        """
-        return not 'catconditions' in self.element.attrib
+        """Filter condition to exclude the category field."""
+        return True
 
     def format_name(self, raw):
         """Formats the name field based on the type of parent node."""

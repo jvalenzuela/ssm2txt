@@ -14,17 +14,6 @@ class MTTFD(mttfd.MTTFD):
 
     child_type = None
 
-    @property
-    def show(self):
-        """
-        Filter condition to exclude this tab if the parent subsystem MTTFD
-        is not determined from blocks.
-        """
-        block = self.parent.parent
-        channel = block.parent
-        subsystem = channel.parent
-        return not subsystem.mttfd_direct
-
 
 class Element(Node):
     """Generates output for elements."""
