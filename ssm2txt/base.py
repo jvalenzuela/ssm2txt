@@ -333,7 +333,19 @@ class Tab(Base):
         else:
             value = formatter(raw_value)
 
-        return value
+        return self.replace_newline(value)
+
+    def replace_newline(self, raw):
+        """Converts the new line control sequence to an actual newline.
+
+        SISTEMA uses this sequence to represent a new line in some attributes.
+        Due to the lack of any concise documentation as to which fields may
+        contain this sequence, the replacement is applied globally to all.
+        This is ok because the new line sequence does not appear in
+        any internal SISTEMA values, such as 'detDirect', and is extremely
+        unlikely to be present in user-supplied strings.
+        """
+        return raw.replace('&cr;&lf;', '\n')
 
     def format_pl(self, raw):
         """Formats a PL attribute value.
